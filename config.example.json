@@ -1,0 +1,5 @@
+{
+  "sourcegraph_url": "http://localhost:3370",
+  "access_token": "YOUR_SOURCEGRAPH_ACCESS_TOKEN",
+  "timeout": 30
+}
