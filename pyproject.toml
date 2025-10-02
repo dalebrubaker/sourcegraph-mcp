@@ -2,7 +2,7 @@
 name = "sourcegraph-mcp"
 version = "1.0.0"
 description = "Model Context Protocol server for SourceGraph code search"
-authors = [{name = "Dale Brubaker", email = "dale@example.com"}]
+authors = [{name = "Dale Brubaker"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -31,6 +31,9 @@ Documentation = "https://github.com/dalebrubaker/sourcegraph-mcp#readme"
 
 [project.scripts]
 sourcegraph-mcp = "server:main"
+
+[tool.setuptools]
+py-modules = ["server"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

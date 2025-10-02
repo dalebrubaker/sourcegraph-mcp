@@ -4,6 +4,7 @@ SourceGraph MCP Server
 A Model Context Protocol server for searching code via SourceGraph's GraphQL API.
 Supports both local and cloud SourceGraph instances.
 """
+import argparse
 import asyncio
 import json
 import os
@@ -15,9 +16,6 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-# Configuration
-CONFIG_FILE = Path(__file__).parent / "config.json"
-
 # Default configuration
 DEFAULT_CONFIG = {
     "sourcegraph_url": "http://localhost:3370",
@@ -26,18 +24,35 @@ DEFAULT_CONFIG = {
 }
 
 
-def load_config() -> dict[str, Any]:
-    """Load configuration from file or environment variables."""
+def load_config(args: Optional[argparse.Namespace] = None) -> dict[str, Any]:
+    """Load configuration from file, environment variables, and CLI args.
+    
+    Priority (highest to lowest):
+    1. CLI arguments
+    2. Environment variables
+    3. Config file (SOURCEGRAPH_CONFIG env var or config.json)
+    4. Default values
+    """
     config = DEFAULT_CONFIG.copy()
     
     # Try to load from config file
-    if CONFIG_FILE.exists():
+    config_file = None
+    if args and args.config:
+        config_file = Path(args.config)
+    elif config_path := os.getenv("SOURCEGRAPH_CONFIG"):
+        config_file = Path(config_path)
+    else:
+        default_config = Path(__file__).parent / "config.json"
+        if default_config.exists():
+            config_file = default_config
+    
+    if config_file and config_file.exists():
         try:
-            with open(CONFIG_FILE) as f:
+            with open(config_file) as f:
                 file_config = json.load(f)
                 config.update(file_config)
         except Exception as e:
-            print(f"Warning: Could not load config file: {e}")
+            print(f"Warning: Could not load config file: {e}", flush=True)
     
     # Environment variables override config file
     if url := os.getenv("SOURCEGRAPH_URL"):
@@ -45,11 +60,20 @@ def load_config() -> dict[str, Any]:
     if token := os.getenv("SOURCEGRAPH_TOKEN"):
         config["access_token"] = token
     
+    # CLI arguments override everything
+    if args:
+        if args.url:
+            config["sourcegraph_url"] = args.url
+        if args.token:
+            config["access_token"] = args.token
+        if args.timeout:
+            config["timeout"] = args.timeout
+    
     return config
 
 
-# Load configuration
-CONFIG = load_config()
+# Global config - will be set in main()
+CONFIG = None
 
 # Initialize MCP server
 app = Server("sourcegraph-mcp")
@@ -415,8 +439,11 @@ async def search_sourcegraph_with_regex(
         return {"error": str(e)}
 
 
-async def main():
+async def main(args: Optional[argparse.Namespace] = None):
     """Run the MCP server."""
+    global CONFIG
+    CONFIG = load_config(args)
+    
     async with stdio_server() as (read_stream, write_stream):
         await app.run(
             read_stream,
@@ -426,4 +453,26 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(
+        description="SourceGraph MCP Server - Search code via SourceGraph's GraphQL API"
+    )
+    parser.add_argument(
+        "--url",
+        help="SourceGraph instance URL (default: http://localhost:3370)"
+    )
+    parser.add_argument(
+        "--token",
+        help="SourceGraph access token"
+    )
+    parser.add_argument(
+        "--config",
+        help="Path to config.json file"
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        help="Request timeout in seconds (default: 30)"
+    )
+    
+    args = parser.parse_args()
+    asyncio.run(main(args))
