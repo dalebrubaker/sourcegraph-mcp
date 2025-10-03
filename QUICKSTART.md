@@ -81,6 +81,28 @@ Add to `~/.claude.json`:
 
 Restart Claude Code and verify with `/mcp`.
 
+**Note:** Permissions are Claude Code-specific. Other clients may not need them.
+
+## Other MCP Clients (Cursor, Windsurf, Zed, Cline, etc.)
+
+Most MCP clients follow a similar pattern:
+
+```json
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "sourcegraph-mcp",
+      "env": {
+        "SOURCEGRAPH_URL": "http://localhost:3370",
+        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+Refer to your client's documentation for the config file location. See [README.md](README.md#other-mcp-clients-cursor-windsurf-zed-cline-etc) for details.
+
 ## Usage Examples
 
 ### Symbol Definitions (Go to Definition)

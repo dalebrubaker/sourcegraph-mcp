@@ -165,6 +165,33 @@ Then add permissions to `.claude/settings.local.json`:
 
 **Important:** Permission format must use `mcp__servername__toolname` with double underscores, not colons.
 
+**Note:** The permissions section above is specific to Claude Code. Other MCP clients may not require explicit permissions or may use different permission systems.
+
+### Other MCP Clients (Cursor, Windsurf, Zed, Cline, etc.)
+
+Most MCP clients use similar configuration. The general pattern is:
+
+1. **Install:** `pipx install sourcegraph-mcp`
+2. **Add to your client's MCP config file:**
+
+```json
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "sourcegraph-mcp",  // or full path: ~/.local/bin/sourcegraph-mcp
+      "env": {
+        "SOURCEGRAPH_URL": "http://localhost:3370",
+        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"
+      }
+    }
+  }
+}
+```
+
+**Refer to your client's documentation for the config file location.**
+
+**Community contributions welcome!** If you've successfully set this up with another client, please submit a PR with instructions.
+
 ## Usage
 
 Once configured, your AI assistant can leverage SourceGraph's indexed search:
