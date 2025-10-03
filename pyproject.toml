@@ -1,6 +1,6 @@
 [project]
 name = "sourcegraph-mcp"
-version = "1.0.1"
+version = "1.1.0"
 description = "Model Context Protocol server for SourceGraph code search"
 authors = [{name = "Dale Brubaker"}]
 readme = "README.md"
