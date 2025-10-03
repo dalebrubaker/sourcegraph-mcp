@@ -6,32 +6,24 @@ Complete step-by-step guide to get SourceGraph MCP server running with Claude.
 
 - Python 3.10 or higher
 - SourceGraph instance (local or cloud)
-- Claude Desktop installed
+- Claude Desktop or Claude Code installed
 
 ## Installation Steps
 
-### 1. Clone or Download the Repository
+### 1. Install with pipx (Recommended)
 
 ```bash
-cd ~/Documents/GitHub
-git clone https://github.com/yourusername/sourcegraph-mcp.git
-cd sourcegraph-mcp
+pipx install sourcegraph-mcp
 ```
 
-Or download and extract the ZIP file to `~/Documents/GitHub/sourcegraph-mcp/`
+That's it! The `sourcegraph-mcp` command is now available globally.
 
-### 2. Install Python Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-Or if you prefer using a virtual environment:
+### 2. Verify Installation
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+which sourcegraph-mcp
+# Should show: /Users/yourusername/.local/bin/sourcegraph-mcp (macOS/Linux)
+# Or: C:\Users\yourusername\.local\bin\sourcegraph-mcp.exe (Windows)
 ```
 
 ### 3. Get Your SourceGraph Access Token
@@ -71,96 +63,127 @@ Then reload your shell:
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-#### Option B: Config File
+#### Option B: Configure via MCP Client
 
-```bash
-cp config.example.json config.json
-```
-
-Edit `config.json`:
-
-```json
-{
-  "sourcegraph_url": "http://localhost:3370",
-  "access_token": "sgp_your_actual_token_here",
-  "timeout": 30
-}
-```
-
-**Important:** Never commit `config.json` with your real token!
+You can also pass the URL and token directly in your Claude Code or Claude Desktop config (see step 6).
 
 ### 5. Test the Connection
 
-Run the test script to verify everything works:
+You can test that your token and URL work:
 
 ```bash
-python test_connection.py
+curl -H "Authorization: token sgp_your_token_here" \
+     http://localhost:3370/.api/graphql \
+     -d '{"query": "{currentUser{username}}"}'
 ```
 
-You should see:
+If successful, you'll see JSON output with your username.
 
-```
-============================================================
-SourceGraph MCP Server - Connection Test
-============================================================
+Alternatively, wait until step 8 to verify everything works together in Claude.
 
-📋 Configuration:
-  URL: http://localhost:3370
-  Token: ✓ Set
-  Timeout: 30s
+### 6. Configure Your MCP Client
 
-🔍 Testing search functionality...
-  Query: 'function' (finding any occurrence)
+Choose Claude Code or Claude Desktop based on your setup.
 
-✅ Success! Found 1234 matches
+#### Claude Code
 
-Sample results:
-  1. myorg/myrepo/src/main.py
-  2. myorg/myrepo/lib/utils.py
-  3. myorg/another-repo/core.cs
+**Option A: User-Wide (Recommended - No Permission Prompts)**
 
-============================================================
-✅ All tests passed!
-============================================================
-```
+Edit `~/.claude.json`:
 
-If you see errors, check the **Troubleshooting** section in README.md.
-
-### 6. Configure Claude Desktop
-
-#### Find Your Config File
-
-- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux:** `~/.config/Claude/claude_desktop_config.json`
-
-#### Edit the Config File
-
-If the file doesn't exist, create it. If it exists and has other MCP servers, add to the `mcpServers` object.
-
-**For environment variables:**
+**IMPORTANT:** Replace the URL and token with your actual SourceGraph instance details.
 
 ```json
 {
   "mcpServers": {
     "sourcegraph": {
-      "command": "python",
-      "args": [
-        "/Users/yourusername/Documents/GitHub/sourcegraph-mcp/server.py"
-      ],
+      "command": "sourcegraph-mcp",
       "env": {
-        "SOURCEGRAPH_URL": "http://localhost:3370",
-        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
+      }
+    }
+  },
+  "permissions": {
+    "allow": [
+      "mcp__sourcegraph__*"
+    ]
+  }
+}
+```
+
+**Note:** If `sourcegraph-mcp` is not in your PATH, use the full path:
+```json
+"command": "/Users/yourusername/.local/bin/sourcegraph-mcp"
+```
+
+No restart needed - Claude Code will reload automatically.
+
+**Option B: Project-Specific**
+
+1. Create `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "sourcegraph-mcp",
+      "env": {
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
       }
     }
   }
 }
 ```
 
-**Replace:**
-- `/Users/yourusername/` with your actual home directory path
-- `sgp_your_actual_token_here` with your real token
-- `http://localhost:3370` with your SourceGraph URL if different
+**Important:** You MUST change BOTH the URL and token to match your SourceGraph instance.
+
+2. Create `.claude/settings.local.json` in your project root:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__sourcegraph__search_sourcegraph",
+      "mcp__sourcegraph__search_sourcegraph_regex",
+      "mcp__sourcegraph__get_sourcegraph_config"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["sourcegraph"]
+}
+```
+
+**Critical:** Permission format must use `mcp__servername__toolname` (double underscores), NOT colons like `MCP:servername:toolname`.
+
+#### Claude Desktop
+
+**Find Your Config File:**
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+**Edit the Config File:**
+
+If the file doesn't exist, create it. If it exists and has other MCP servers, add to the `mcpServers` object.
+
+**IMPORTANT:** Replace the URL and token with your actual SourceGraph instance details.
+
+```json
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "sourcegraph-mcp",
+      "env": {
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
+      }
+    }
+  }
+}
+```
 
 **For cloud SourceGraph:**
 
@@ -168,49 +191,31 @@ If the file doesn't exist, create it. If it exists and has other MCP servers, ad
 {
   "mcpServers": {
     "sourcegraph": {
-      "command": "python",
-      "args": [
-        "/Users/yourusername/Documents/GitHub/sourcegraph-mcp/server.py"
-      ],
+      "command": "sourcegraph-mcp",
       "env": {
-        "SOURCEGRAPH_URL": "https://sourcegraph.yourcompany.com",
-        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"
+        "SOURCEGRAPH_URL": "https://sourcegraph.yourcompany.com",  // CHANGE THIS to your company URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
       }
     }
   }
 }
 ```
 
-**Using virtual environment Python:**
+**Note:** If `sourcegraph-mcp` is not in your PATH, use the full path:
+- **macOS/Linux:** `/Users/yourusername/.local/bin/sourcegraph-mcp`
+- **Windows:** `C:\Users\yourusername\.local\bin\sourcegraph-mcp.exe`
 
-If you created a virtual environment, use that Python:
+### 7. Restart Your MCP Client
 
-```json
-{
-  "mcpServers": {
-    "sourcegraph": {
-      "command": "/Users/yourusername/Documents/GitHub/sourcegraph-mcp/.venv/bin/python",
-      "args": [
-        "/Users/yourusername/Documents/GitHub/sourcegraph-mcp/server.py"
-      ],
-      "env": {
-        "SOURCEGRAPH_URL": "http://localhost:3370",
-        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"
-      }
-    }
-  }
-}
-```
+**For Claude Code:**
+- No restart required - settings are loaded automatically
 
-### 7. Restart Claude Desktop
-
-**Important:** Completely quit Claude Desktop (don't just close the window).
-
+**For Claude Desktop:**
+- **Important:** Completely quit Claude Desktop (don't just close the window)
 - **macOS:** Cmd+Q or Claude → Quit Claude
 - **Windows:** File → Exit
 - **Linux:** File → Quit
-
-Then relaunch Claude Desktop.
+- Then relaunch Claude Desktop
 
 ### 8. Verify It's Working
 
@@ -248,25 +253,31 @@ Ask Claude: "Check SourceGraph configuration"
 
 ## Common Issues
 
-### Python Not Found
+### Command Not Found
 
-If you get "python: command not found":
+If you get "command not found: sourcegraph-mcp":
 
-- Try `python3` instead of `python` in the config
-- Or use full path: `/usr/bin/python3` or `/usr/local/bin/python3`
+1. **Verify installation:**
+   ```bash
+   which sourcegraph-mcp
+   ```
+
+2. **Check if `~/.local/bin` is in your PATH:**
+   ```bash
+   echo $PATH | grep .local/bin
+   ```
+
+3. **Use full path in config:**
+   ```json
+   "command": "/Users/yourusername/.local/bin/sourcegraph-mcp"
+   ```
 
 ### Permission Denied
 
-```bash
-chmod +x /Users/yourusername/Documents/GitHub/sourcegraph-mcp/server.py
-```
-
-### Import Errors
-
-Make sure dependencies are installed:
+If you get permission errors:
 
 ```bash
-pip install -r requirements.txt
+chmod +x ~/.local/bin/sourcegraph-mcp
 ```
 
 ### SourceGraph Not Running
@@ -276,6 +287,23 @@ Start your local SourceGraph:
 ```bash
 docker-compose up -d  # or however you run SourceGraph
 ```
+
+Verify it's accessible:
+```bash
+curl http://localhost:3370/
+```
+
+### Claude Code Permission Prompts (Repeated "Allow/Deny")
+
+If Claude Code keeps asking for permission even after selecting "Don't ask again":
+
+1. **Check permission format** - Must use `mcp__sourcegraph__*` (double underscores), NOT `MCP:sourcegraph:*` (colons)
+2. **Use user-wide config** - Move server to `~/.claude.json` instead of project `.mcp.json` for better permission persistence
+3. **Verify settings location** - Project permissions go in `.claude/settings.local.json`, not `.claude/settings.json`
+4. **Reset if stuck:**
+   ```bash
+   claude mcp reset-project-choices
+   ```
 
 ## Next Steps
 

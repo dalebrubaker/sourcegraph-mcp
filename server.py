@@ -452,6 +452,33 @@ async def main(args: Optional[argparse.Namespace] = None):
         )
 
 
+def cli_entry():
+    """Synchronous entry point for package installation."""
+    parser = argparse.ArgumentParser(
+        description="SourceGraph MCP Server - Search code via SourceGraph's GraphQL API"
+    )
+    parser.add_argument(
+        "--url",
+        help="SourceGraph instance URL (default: http://localhost:3370)"
+    )
+    parser.add_argument(
+        "--token",
+        help="SourceGraph access token"
+    )
+    parser.add_argument(
+        "--config",
+        help="Path to config.json file"
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        help="Request timeout in seconds (default: 30)"
+    )
+    
+    args = parser.parse_args()
+    asyncio.run(main(args))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="SourceGraph MCP Server - Search code via SourceGraph's GraphQL API"

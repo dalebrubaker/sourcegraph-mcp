@@ -11,18 +11,19 @@ Search your entire codebase instantly without loading files into context:
 
 ## Installation
 
-### Quick Start (with pipx)
+### Quick Start (with pipx - Recommended)
 
 ```bash
 pipx install sourcegraph-mcp
 ```
 
-### From Source
+This installs the `sourcegraph-mcp` command globally and handles all dependencies automatically.
+
+### Verify Installation
 
 ```bash
-git clone https://github.com/dalebrubaker/sourcegraph-mcp
-cd sourcegraph-mcp
-pip install -e .
+which sourcegraph-mcp
+# Should show: /Users/yourusername/.local/bin/sourcegraph-mcp
 ```
 
 ## Configuration
@@ -58,29 +59,33 @@ sourcegraph-mcp --url http://localhost:3370 --token sgp_your_token_here
 
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
+**IMPORTANT:** Replace the URL and token with your actual SourceGraph instance details.
+
 ```json
 {
   "mcpServers": {
     "sourcegraph": {
       "command": "sourcegraph-mcp",
       "env": {
-        "SOURCEGRAPH_URL": "http://localhost:3370",
-        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"  // CHANGE THIS to your actual token
       }
     }
   }
 }
 ```
+
+**Important:** You MUST change BOTH the URL and token to match your SourceGraph instance.
 
 ### Claude Code
 
-For user-wide access:
+**Important:** First install with `pipx install sourcegraph-mcp`, then configure.
 
-```bash
-claude mcp add sourcegraph -- sourcegraph-mcp --url http://localhost:3370 --token sgp_your_token_here
-```
+#### Option 1: User-Wide (Recommended - No Permission Prompts)
 
-For project-specific access, create `.mcp.json` in your project root:
+Add to `~/.claude.json`:
+
+**IMPORTANT:** Replace the URL and token with your actual SourceGraph instance details.
 
 ```json
 {
@@ -88,13 +93,63 @@ For project-specific access, create `.mcp.json` in your project root:
     "sourcegraph": {
       "command": "sourcegraph-mcp",
       "env": {
-        "SOURCEGRAPH_URL": "http://localhost:3370",
-        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"  // CHANGE THIS to your actual token
+      }
+    }
+  },
+  "permissions": {
+    "allow": [
+      "mcp__sourcegraph__*"
+    ]
+  }
+}
+```
+
+**Note:** If `sourcegraph-mcp` is not in your PATH, use the full path:
+```json
+"command": "/Users/yourusername/.local/bin/sourcegraph-mcp"
+```
+
+Restart Claude Code and verify with `/mcp` command.
+
+#### Option 2: Project-Specific
+
+Create `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "sourcegraph-mcp",
+      "env": {
+        "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
+        "SOURCEGRAPH_TOKEN": "sgp_your_token_here"  // CHANGE THIS to your actual token
       }
     }
   }
 }
 ```
+
+**Important:** You MUST change BOTH the URL and token to match your SourceGraph instance.
+
+Then add permissions to `.claude/settings.local.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__sourcegraph__search_sourcegraph",
+      "mcp__sourcegraph__search_sourcegraph_regex",
+      "mcp__sourcegraph__get_sourcegraph_config"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["sourcegraph"]
+}
+```
+
+**Important:** Permission format must use `mcp__servername__toolname` with double underscores, not colons.
 
 ## Usage
 
@@ -141,10 +196,13 @@ python server.py --url http://localhost:3370 --token sgp_your_token_here
 - Verify SourceGraph is running and accessible
 - Check URL format (include http:// or https://)
 - Test token: `curl -H "Authorization: token sgp_..." http://your-url/.api/graphql`
+- Verify installation: `which sourcegraph-mcp` should show the installed path
+- If not in PATH, use full path in config: `/Users/yourusername/.local/bin/sourcegraph-mcp`
 
-**"spawn python ENOENT"**
-- Use full path to Python: `/path/to/.venv/bin/python` instead of just `python`
-- Or use `python3` instead of `python`
+**"Command not found"**
+- Make sure you installed with `pipx install sourcegraph-mcp`
+- Check if `~/.local/bin` is in your PATH: `echo $PATH | grep .local/bin`
+- Try using the full path in your config instead of just `sourcegraph-mcp`
 
 ## License
 
