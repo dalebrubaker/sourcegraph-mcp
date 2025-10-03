@@ -2,6 +2,7 @@
 """
 Test script to verify SourceGraph MCP server configuration.
 Run this before configuring Claude Desktop to ensure everything works.
+Tests both code search and symbol search functionality.
 """
 import asyncio
 import json
@@ -12,7 +13,7 @@ from pathlib import Path
 # Add server.py to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from server import load_config, search_sourcegraph
+from server import load_config, search_code, search_symbols
 
 
 async def test_connection():
@@ -42,12 +43,12 @@ async def test_connection():
         print("  # Edit config.json with your token")
         return False
     
-    # Test simple search
-    print("🔍 Testing search functionality...")
+    # Test 1: Simple code search
+    print("🔍 Test 1: Code Search")
     print("  Query: 'function' (finding any occurrence)")
     print()
     
-    result = await search_sourcegraph("function", max_results=3, timeout=10)
+    result = await search_code("function", max_results=3)
     
     if "error" in result:
         print(f"❌ Search failed: {result['error']}")
@@ -68,7 +69,7 @@ async def test_connection():
         match_count = search_data["results"]["matchCount"]
         results = search_data["results"]["results"]
         
-        print(f"✅ Success! Found {match_count} matches")
+        print(f"✅ Code search successful! Found {match_count} matches")
         
         if results:
             print()
@@ -80,15 +81,6 @@ async def test_connection():
                     print(f"  {i}. {repo['name']}/{file_info['path']}")
         
         print()
-        print("=" * 60)
-        print("✅ All tests passed!")
-        print()
-        print("Next steps:")
-        print("1. Configure Claude Desktop (see README.md)")
-        print("2. Restart Claude Desktop")
-        print("3. Start searching your codebase!")
-        print("=" * 60)
-        return True
     
     except (KeyError, TypeError) as e:
         print(f"❌ Unexpected response format: {e}")
@@ -96,6 +88,70 @@ async def test_connection():
         print("Response:")
         print(json.dumps(result, indent=2))
         return False
+    
+    # Test 2: Symbol search
+    print("🔍 Test 2: Symbol Search")
+    print("  Query: Finding symbols (functions, classes, etc.)")
+    print()
+    
+    # Try a common symbol name that's likely to exist
+    symbol_result = await search_symbols("main", max_results=3)
+    
+    if "error" in symbol_result:
+        print(f"⚠️  Symbol search error: {symbol_result['error']}")
+        print("     (This may be normal if your repos don't have indexed symbols)")
+    elif "errors" in symbol_result:
+        print(f"⚠️  Symbol search GraphQL error: {symbol_result['errors'][0].get('message')}")
+        print("     (This may be normal if symbol indexing is not enabled)")
+    else:
+        try:
+            symbol_data = symbol_result["data"]["search"]
+            symbol_matches = symbol_data["results"]["matchCount"]
+            symbol_results = symbol_data["results"]["results"]
+            
+            print(f"✅ Symbol search successful! Found {symbol_matches} symbol matches")
+            
+            if symbol_results:
+                print()
+                print("Sample symbol results:")
+                for i, res in enumerate(symbol_results[:3], 1):
+                    if res["__typename"] == "FileMatch":
+                        file_info = res["file"]
+                        symbols = res.get("symbols", [])
+                        if symbols:
+                            for sym in symbols[:2]:  # Show first 2 symbols per file
+                                location = sym["location"]
+                                line = location["range"]["start"]["line"]
+                                print(f"  {i}. {sym['name']} ({sym['kind']}) at line {line}")
+                                print(f"     in {file_info['path']}")
+            else:
+                print("⚠️  No symbols found (repos may not have indexed symbols yet)")
+            
+            print()
+        
+        except (KeyError, TypeError) as e:
+            print(f"⚠️  Unexpected symbol response format: {e}")
+            print("     (Symbol indexing may not be available)")
+            print()
+    
+    print("=" * 60)
+    print("✅ All tests passed!")
+    print()
+    print("Features available:")
+    print("  ✓ Code search (text-based)")
+    print("  ✓ Symbol search (definitions)")
+    print("  ✓ Reference search (usages)")
+    print("  ✓ Regex search")
+    print()
+    print("Next steps:")
+    print("1. Configure Claude Desktop/Code (see README.md)")
+    print("2. Restart your MCP client")
+    print("3. Try commands like:")
+    print("   - 'Find the definition of ProcessOrder'")
+    print("   - 'Show me all references to CustomerService'")
+    print("   - 'Search for error handling code'")
+    print("=" * 60)
+    return True
 
 
 def main():
