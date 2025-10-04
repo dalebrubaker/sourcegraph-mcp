@@ -316,6 +316,8 @@ Verify it's accessible:
 curl http://localhost:3370/
 ```
 
+
+
 ### Claude Code Permission Prompts (Repeated "Allow/Deny")
 
 If Claude Code keeps asking for permission even after selecting "Don't ask again":
@@ -339,3 +341,20 @@ If Claude Code keeps asking for permission even after selecting "Don't ask again
 1. Check the [Troubleshooting section](README.md#troubleshooting) in README
 2. Open an [issue on GitHub](https://github.com/dalebrubaker/sourcegraph-mcp/issues)
 3. Review [SourceGraph documentation](https://docs.sourcegraph.com)
+
+
+## Tip for installing a local sourcegraph server
+ 
+ You will need to log into localhost with a browser and set a Site Configuration, something like this:
+
+ {
+  // The externally accessible URL for Sourcegraph (i.e., what you type into your browser)
+  // This is required to be configured for Sourcegraph to work correctly.
+  "externalURL": "http://192.168.0.130:7080",
+  "auth.providers": [
+    {
+      "allowSignup": true,
+      "type": "builtin"
+    }
+  ]
+}
