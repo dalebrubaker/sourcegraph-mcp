@@ -87,7 +87,7 @@ Choose Claude Code or Claude Desktop based on your setup.
 
 #### Claude Code
 
-**Option A: User-Wide (Recommended - No Permission Prompts)**
+ **Option A: User-Wide (Recommended - No Permission Prompts)**
 
 Edit `~/.claude.json`:
 
@@ -130,11 +130,27 @@ No restart needed - Claude Code will reload automatically.
       "command": "sourcegraph-mcp",
       "env": {
         "SOURCEGRAPH_URL": "http://localhost:3370",  // CHANGE THIS to your SourceGraph URL
-        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
+per        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"  // CHANGE THIS to your actual token
       }
     }
   }
 }
+
+On Windows, this might look like:
+{
+  "mcpServers": {
+    "sourcegraph": {
+      "command": "C:\\Users\\YOUR_USERNAME\\.local\\bin\\sourcegraph-mcp.exe",
+      "args": [],
+      "env": {
+        "SOURCEGRAPH_URL": "http://192.168.0.130:7080/", // CHANGE THIS to the URL you can log into in your browser
+        "SOURCEGRAPH_TOKEN": "sgp_your_actual_token_here"
+      }
+    }
+  }
+}
+
+
 ```
 
 **Important:** You MUST change BOTH the URL and token to match your SourceGraph instance.
@@ -153,6 +169,13 @@ No restart needed - Claude Code will reload automatically.
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": ["sourcegraph"]
 }
+
+And it might work better if your ~/.claude.json file simply included:
+"permissions": {
+    "allow": [
+      "mcp__sourcegraph__*"
+    ]
+  }
 ```
 
 **Critical:** Permission format must use `mcp__servername__toolname` (double underscores), NOT colons like `MCP:servername:toolname`.
