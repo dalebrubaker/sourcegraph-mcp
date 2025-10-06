@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2025-01-06
+
+### 📚 Documentation Improvements
+- Added comprehensive Codex (OpenAI) installation guide to SETUP.md
+- Updated prerequisites to include Codex as a supported client
+- Added TOML configuration examples for Codex global config
+- Clarified that Codex auto-reloads MCP servers (no restart needed)
+
 ## [2.0.0] - 2025-01-03
 
 ### 🎉 Major Features Added

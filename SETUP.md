@@ -6,7 +6,7 @@ Complete step-by-step guide to get SourceGraph MCP server running with Claude.
 
 - Python 3.10 or higher
 - SourceGraph instance (local or cloud)
-- Claude Desktop or Claude Code installed
+- Claude Desktop, Claude Code, or Codex (OpenAI) installed
 
 ## Installation Steps
 
@@ -83,7 +83,7 @@ Alternatively, wait until step 8 to verify everything works together in Claude.
 
 ### 6. Configure Your MCP Client
 
-Choose Claude Code or Claude Desktop based on your setup.
+Choose Claude Code, Claude Desktop, or Codex based on your setup.
 
 #### Claude Code
 
@@ -228,6 +228,51 @@ If the file doesn't exist, create it. If it exists and has other MCP servers, ad
 - **macOS/Linux:** `/Users/yourusername/.local/bin/sourcegraph-mcp`
 - **Windows:** `C:\Users\yourusername\.local\bin\sourcegraph-mcp.exe`
 
+#### Codex (OpenAI)
+
+**Find Your Config File:**
+
+- **macOS/Linux:** `~/.codex/config.toml`
+- **Windows:** `%USERPROFILE%\.codex\config.toml`
+
+Create the file if it doesn't exist.
+
+**Edit the Config File:**
+
+Unlike Claude Code, Codex uses a global configuration (not per-project). Add the following to your `config.toml`:
+
+**IMPORTANT:** Replace the URL and token with your actual SourceGraph instance details.
+
+```toml
+[mcp_servers.sourcegraph]
+command = "sourcegraph-mcp"
+[mcp_servers.sourcegraph.env]
+SOURCEGRAPH_URL = "http://localhost:3370"
+SOURCEGRAPH_TOKEN = "sgp_your_actual_token_here"
+```
+
+**Alternative compact format:**
+
+```toml
+[mcp_servers.sourcegraph]
+command = "sourcegraph-mcp"
+env = { SOURCEGRAPH_URL = "http://localhost:3370", SOURCEGRAPH_TOKEN = "sgp_your_token_here" }
+```
+
+**For cloud SourceGraph:**
+
+```toml
+[mcp_servers.sourcegraph]
+command = "sourcegraph-mcp"
+[mcp_servers.sourcegraph.env]
+SOURCEGRAPH_URL = "https://sourcegraph.yourcompany.com"
+SOURCEGRAPH_TOKEN = "sgp_your_actual_token_here"
+```
+
+**Note:** If `sourcegraph-mcp` is not in your PATH, use the full path:
+- **macOS/Linux:** `command = "/Users/yourusername/.local/bin/sourcegraph-mcp"`
+- **Windows:** `command = "C:\\Users\\yourusername\\.local\\bin\\sourcegraph-mcp.exe"`
+
 ### 7. Restart Your MCP Client
 
 **For Claude Code:**
@@ -239,6 +284,9 @@ If the file doesn't exist, create it. If it exists and has other MCP servers, ad
 - **Windows:** File → Exit
 - **Linux:** File → Quit
 - Then relaunch Claude Desktop
+
+**For Codex:**
+- No restart required - Codex automatically reloads MCP servers from `config.toml`
 
 ### 8. Verify It's Working
 
