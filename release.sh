@@ -34,12 +34,12 @@ echo ""
 
 # Build the package
 echo "🔨 Building package..."
-python -m build
+python3 -m build
 echo ""
 
 # Check the package
 echo "🔍 Checking package..."
-python -m twine check dist/*
+python3 -m twine check dist/*
 echo ""
 
 # Show what will be uploaded
@@ -57,7 +57,7 @@ fi
 
 # Upload to PyPI
 echo "⬆️  Uploading to PyPI..."
-python -m twine upload dist/*
+python3 -m twine upload dist/*
 
 echo ""
 echo "✅ Successfully released version $VERSION to PyPI!"
